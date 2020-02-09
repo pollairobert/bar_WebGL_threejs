@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bár</title>
+    <script src="js-r96/three.js"></script>
+    <script src="js-r96/TrackballControls.js"></script>
+    <script src="walls.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+
+        #f1 {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 10%;
+            text-align: left;
+            z-index: 0;
+            display: block;
+            color: lightblue;
+
+        }
+        #caption {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 10%;
+            text-align: left;
+            z-index: 20;
+            display: block;
+            color: lightblue;
+            visibility: hidden;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 100px;
+            width: 90%;
+            text-align: right;
+            z-index: 100;
+            display: block;
+            color: lightblue;
+            visibility: hidden;
+        }
+        #infopanel{
+            visibility: hidden;
+        }
+
+    </style>
+</head>
+<body onload="init()">
+
+
+<div id="f1"> Info (F1)</div>
+<div id = "caption">
+    Póllai Róbert<br/>
+    AEB54R<br/>
+    Mérnökinformatikus<br/>
+    2018/1
+
+
+</div>
+<div id = "info">
+    Menü (F2)<br/>
+    <p id = "infopanel" >
+        Mennyezet elrejtése:   &#8593</br>
+        Hátsó fal elrejtése:   &#8595</br>
+        Bal oldali fal elrejtése:  &#8592</br>
+        Jobb oldali fal elrejtése: &#8594</br>
+        Teremvilágítás ki/be (pontfények): End </br>
+        Ventillátor ki/be : Home </br>
+        Pult világítás ki/be : PgUp </br>
+        Reflektorfény ki/be : PgDn </br>
+    </p>
+</div>
+
+<script>
+    // Globális változók
+        var WIDTH, HEIGHT, aspectRatio;
+        var renderer;
+        var scene, camera;
+        var floorGeom,floorMat,floorMesh , spheremesh;
+        var controls, wall1g, wall2g, wall3g, ceilingg,wall1m,wall2m, wall3m, ceilingm,wall1Mesh,wall2Mesh,wall3Mesh;
+        var ceilingMesh;
+        var pultg,pultm, pultmesh,pulttableg,pulttablem,pulttablemesh;
+        var chairfootgeom,chairfootmat,chairfootmesh;
+        var chairsolegeom,chairsolemat,chairsolemesh;
+        var chairseatgeom,chairseatmat,chairseatmesh;
+        var glassg,glassm,glassmesh;
+        var bootlesg,bootlesm,bootlesmesh,bootlesg2,bootlesm2,bootlesmesh2,bootlesg3,bootlesm3,bootlesmesh3;
+        var chairClone2, chairClone3;
+        var groupChair, groupBootle, groupGlass;
+        var ambientLight;
+        var  bootleclone1,bootleclone2,bootleclone3;
+        var glassClone1,glassClone2,glassClone3,glassClone4;
+        var glassbottomg,glassbottomm,glassbottommesh;
+        var plight1,plight2,plight3,plight4,plight5,plight6;
+        var spotg,spotm,spotmesh,spot2g,spot2m,spot2mesh,spot3g,spot3m,spot3mesh;
+        var groupSpot;
+        var spotclone2;
+        var spotLight;
+        var fan1g,fan1m,fan1mesh,fan2g,fan2m,fan2mesh,fan3g,fan3m,fan3mesh;
+        var spinonoff =false;
+        var fan3clone1g,fan3clone1m,fan3clone1mesh;
+        var endright,endleft,endup,enddown;
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+            HEIGHT = window.innerHeight;
+            WIDTH = window.innerWidth;
+            aspectRatio = WIDTH / HEIGHT;
+
+        //Billenytűzet eseménykezelés
+            window.addEventListener( 'keydown', keydownevent );
+
+        // Renderer létrehozása és DOM-hoz adása
+            renderer = new THREE.WebGLRenderer({antialias: true});
+            renderer.setSize(WIDTH, HEIGHT);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+        // Színtér létrehozása
+            scene = new THREE.Scene();
+
+        // Kamera létrehozása és vetítési paramétereinek beállítása
+            camera = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 100000);
+            camera.position.x =  0;
+            camera.position.y = -1000;
+            camera.position.z = 250;
+            camera.lookAt(scene.position);
+
+        //Testúra betöltő hozzáadása
+            var textureLoader = new THREE.TextureLoader();
+
+        //Ambiens fény hozzáadása
+            ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
+            scene.add( ambientLight );
+
+        //Padló hozzáadása
+            floorGeom = new THREE.PlaneGeometry( 1900,900);
+            floorMat = new THREE.MeshPhongMaterial( {color: 0xffffff} );
+            floorMesh = new THREE.Mesh( floorGeom, floorMat );
+            floorMesh.material.side = THREE.DoubleSide;
+            floorMat.map = textureLoader.load( 'floor2.jpg' );
+            floorMesh.receiveShadow = true;
+            floorMesh.castShadow = false;
+            scene.add( floorMesh );
+
+        //Falak hozzáadása
+            wall1g = new THREE.PlaneGeometry(650, 900);
+            wall1m = new THREE.MeshPhongMaterial({color: 0x2fff11});
+            wall1Mesh = new THREE.Mesh(wall1g, wall1m);
+            wall1Mesh.rotation.y = radian(90);
+            wall1Mesh.position.set(-950, 0, 325);
+            wall1Mesh.castShadow = false;
+            wall1Mesh.receiveShadow = true;
+            scene.add(wall1Mesh);
+
+            wall2g = new THREE.PlaneGeometry(1900, 650);
+            wall2m = new THREE.MeshPhongMaterial({color: 0xfff111});
+            wall2Mesh = new THREE.Mesh(wall2g, wall2m);
+            wall2Mesh.rotation.x = radian(90);
+            wall2Mesh.position.set(0, 450, 325);
+            wall2Mesh.castShadow = false;
+            wall2Mesh.receiveShadow = true;
+            scene.add(wall2Mesh);
+
+            wall3g = new THREE.PlaneGeometry(650, 900);
+            wall3m = new THREE.MeshPhongMaterial({color: 0xff1111});
+            wall3Mesh = new THREE.Mesh(wall3g, wall3m);
+            wall3Mesh.rotation.y = radian(-90);
+            wall3Mesh.position.set(950, 0, 325);
+            wall3Mesh.castShadow = false;
+            wall3Mesh.receiveShadow = true;
+            scene.add(wall3Mesh);
+
+        //Plafon hozzáadása
+            ceilingg = new THREE.PlaneGeometry(1900, 900);
+            ceilingm = new THREE.MeshPhongMaterial({color: 0xffffff});
+            ceilingMesh = new THREE.Mesh(ceilingg, ceilingm);
+            ceilingMesh.rotation.x = radian(180);
+            ceilingMesh.position.z = 650;
+            ceilingMesh.castShadow = false;
+            ceilingMesh.receiveShadow = true;
+            scene.add(ceilingMesh);
+
+        //Pult alsó része
+            pultg = new THREE.BoxGeometry(100,850,220,2,2,2);
+            pultm = new THREE.MeshPhongMaterial ({ color: 0xff6800, wireframe: false});
+            pultmesh = new THREE.Mesh(pultg,pultm);
+            pultmesh.position.set(650,0,110);
+            pultmesh.castShadow = true;
+            pultmesh.receiveShadow = true;
+            floorMesh.add(pultmesh);
+
+        //Pult könyöklő
+            pulttableg = new THREE.BoxGeometry(150,900,10,2,2);
+            pulttablem = new THREE.MeshPhongMaterial ({ color: 0xff6800, wireframe: false });
+            pulttablemesh = new THREE.Mesh(pulttableg,pulttablem);
+            pulttablemesh.position.set(650,0,225);
+            pulttablemesh.castShadow = true;
+            pulttablemesh.receiveShadow = true;
+            scene.add(pulttablemesh);
+
+        //Bárszék összerakása - talp
+
+            groupChair = new THREE.Group();
+            chairsolegeom =  new THREE.CylinderGeometry( 30, 30, 2, 20 );
+            chairsolemat = new THREE.MeshPhongMaterial( { color: 0xc0c4c3, wireframe: false } );
+            chairsolemesh = new THREE.Mesh(chairsolegeom,chairsolemat);
+            chairsolemesh.rotation.x = radian(90);
+            chairsolemesh.position.set(500,0,1);
+            chairsolemesh.castShadow = true;
+            chairsolemesh.receiveShadow = true;
+            groupChair.add(chairsolemesh);
+
+            // Láb
+            chairfootgeom =  new THREE.CylinderGeometry( 10, 10, 150, 20 );
+            chairfootmat = new THREE.MeshPhongMaterial( { color: 0xc0c4c3, wireframe: false } );
+            chairfootmesh = new THREE.Mesh(chairfootgeom,chairfootmat);
+            chairfootmesh.rotation.x = radian(90);
+            chairfootmesh.position.set(500,0,76);
+            chairfootmesh.castShadow = true;
+            chairfootmesh.receiveShadow = true;
+            groupChair.add(chairfootmesh);
+
+            //Ülőke
+            chairseatgeom =  new THREE.CylinderGeometry( 50, 50, 30, 20 );
+            chairseatmat = new THREE.MeshPhongMaterial( { color: 0xa34f01, wireframe: false } );
+            chairseatmesh = new THREE.Mesh(chairseatgeom,chairseatmat);
+            chairseatmesh.rotation.x = radian(90);
+            chairseatmesh.position.set(500,0,166);
+            groupChair.add(chairseatmesh);
+            chairseatmesh.castShadow = true;
+            chairseatmesh.receiveShadow = true;
+            scene.add(groupChair);
+
+        //Székek klónozása
+            chairClone2 = groupChair.clone();
+            chairClone2.position.set(0,225,0);
+            chairClone2.castShadow = true;
+            scene.add(chairClone2);
+
+            chairClone3 = groupChair.clone();
+            chairClone3.position.set(0,-225,0);
+            scene.add(chairClone3);
+
+        //Palack létrehozása
+
+            groupBootle = new THREE.Group;
+            bootlesg = new THREE.CylinderGeometry( 10, 10, 50, 20 );
+            bootlesm = new THREE.MeshPhongMaterial( { color: 0x1c4fa0, wireframe: false } );
+            bootlesmesh = new THREE.Mesh(bootlesg,bootlesm);
+            bootlesmesh.rotation.x = radian(90);
+            bootlesmesh.position.set(0,0,30);
+            bootlesmesh.castShadow = true;
+            bootlesmesh.receiveShadow = true;
+            groupBootle.add(bootlesmesh);
+
+            bootlesg2 = new THREE.SphereGeometry( 10, 30, 30 );
+            bootlesm2 = new THREE.MeshPhongMaterial( { color: 0x1c4fa0, wireframe: false } );
+            bootlesmesh2 = new THREE.Mesh( bootlesg2, bootlesm2 );
+            bootlesmesh2.position.set(0,0,55);
+            bootlesmesh2.castShadow = true;
+            bootlesmesh2.receiveShadow = true;
+            groupBootle.add(bootlesmesh2);
+
+            bootlesg3 = new THREE.CylinderGeometry( 3, 3 , 20, 20 );
+            bootlesm3 = new THREE.MeshPhongMaterial( { color: 0x1c4fa0, wireframe: false } );
+            bootlesmesh3 = new THREE.Mesh(bootlesg3,bootlesm3);
+            bootlesmesh3.rotation.x = radian(90);
+            bootlesmesh3.position.set(0,0,70);
+            bootlesmesh3.castShadow = true;
+            bootlesmesh3.receiveShadow = true;
+            groupBootle.add(bootlesmesh3);
+            pulttablemesh.add(groupBootle);
+
+        //Palack klónozása
+            bootleclone1 = groupBootle.clone();
+            bootleclone2 = groupBootle.clone();
+            bootleclone3 = groupBootle.clone();
+            bootleclone1.position.set(-30,250,0);
+            bootleclone2.position.set(50,50,0);
+            bootleclone3.position.set(10,-160,0);
+            pulttablemesh.add(bootleclone1);
+            pulttablemesh.add(bootleclone3);
+            pulttablemesh.add(bootleclone2);
+
+        //Pohár létrehozása
+            groupGlass = new THREE.Group;
+            glassg = new THREE.CylinderGeometry( 5, 3 , 10, 30,30,true );
+            glassm = new THREE.MeshPhongMaterial( { color: 0x0c5439, wireframe: false } );
+            glassmesh = new THREE.Mesh(glassg,glassm);
+            glassmesh.material.side = THREE.DoubleSide;
+            glassmesh.rotation.x = radian(90);
+            glassmesh.position.set(-30,20,10);
+            glassmesh.castShadow = true;
+            glassmesh.receiveShadow = true;
+            groupGlass.add(glassmesh);
+
+            glassbottomg = new THREE.CircleGeometry( 3, 30);
+            glassbottomm = new THREE.MeshPhongMaterial( { color: 0x0c5439, wireframe: false } );
+            glassbottommesh = new THREE.Mesh( glassbottomg, glassbottomm );
+            glassbottommesh.material.side = THREE.DoubleSide;
+            glassbottommesh.position.set(-30,20,5.1);
+            glassbottommesh.castShadow = true;
+            glassbottommesh.receiveShadow = true;
+            groupGlass.add(glassbottommesh);
+
+        //Pharak klónozása
+            glassClone1 = groupGlass.clone();
+            glassClone2 = groupGlass.clone();
+            glassClone3 = groupGlass.clone();
+            glassClone4 = groupGlass.clone();
+            glassClone1.position.set(-20,-180,0);
+            glassClone2.position.set(20,200,0);
+            glassClone3.position.set(15,-350,0);
+            glassClone4.position.set(10,-370,0);
+            pulttablemesh.add(glassClone1);
+            pulttablemesh.add(glassClone2);
+            pulttablemesh.add(glassClone3);
+            pulttablemesh.add(glassClone4);
+
+        //Pultvilágítás
+            groupSpot = new THREE.Group;
+            spotg = new THREE.CylinderGeometry( 20, 50 , 50, 30,30,true);
+            spotm = new THREE.MeshPhongMaterial( { color: 0xd0e1f2, wireframe: false } );
+            spotmesh = new THREE.Mesh( spotg, spotm );
+            spotmesh.material.side = THREE.DoubleSide;
+            spotmesh.rotation.x = radian(90);
+            spotmesh.position.set(650,150,500);
+            spotmesh.castShadow = true;
+            spotmesh.receiveShadow = true;
+            groupSpot.add(spotmesh);
+
+            spot2g = new THREE.CircleGeometry( 20, 20);
+            spot2m = new THREE.MeshPhongMaterial( { color: 0xd0e1f2, wireframe: false } );
+            spot2mesh = new THREE.Mesh( spot2g, spot2m );
+            spot2mesh.material.side = THREE.DoubleSide;
+            spot2mesh.position.set(650,150,525);
+            spot2mesh.castShadow = true;
+            spot2mesh.receiveShadow = true;
+            groupSpot.add(spot2mesh);
+
+            spot3g = new THREE.CylinderGeometry( 2, 2 ,125, 30,30,true);
+            spot3m = new THREE.MeshPhongMaterial( { color: 0xd0e1f2, wireframe: false } );
+            spot3mesh = new THREE.Mesh( spot3g, spot3m );
+            spot3mesh.material.side = THREE.DoubleSide;
+            spot3mesh.rotation.x = radian(90);
+            spot3mesh.position.set(650,150,587.5);
+            spot3mesh.castShadow = true;
+            spot3mesh.receiveShadow = true;
+            groupSpot.add(spot3mesh);
+            scene.add(groupSpot);
+
+            spotclone2 = groupSpot.clone();
+            spotclone2.position.set(0,-300,0);
+            scene.add(spotclone2);
+
+        //Pontfények beállítása
+            plight1 = new THREE.PointLight( 0xff2419, 1, 1900,2 );
+            plight1.castShadow = true;
+            plight1.position.set( -900, -400, 600 );
+            //light.shadowCameraVisible = true;
+            scene.add( plight1 );
+            plight1.shadow.mapSize.width = 512;  // default
+            plight1.shadow.mapSize.height = 512; // default
+            plight1.shadow.camera.near =  0.5;       // default
+            plight1.shadow.camera.far = 1900      // default
+
+            plight2 = plight1.clone();
+            plight2.position.set( -900, 400, 600 );
+            scene.add( plight2 );
+
+            plight3 = plight1.clone();
+            plight3.position.set(900,-400,600);
+            scene.add(plight3);
+
+            plight4 = plight1.clone();
+            plight4.position.set(900,400,600);
+            scene.add(plight4);
+
+            plight5 = plight1.clone();
+            plight5.color.set(0xffffff,30);
+            plight5.position.set(0,0,0);
+            spot2mesh.add(plight5);
+
+            plight6 = plight5.clone();
+            plight6.color.set(0xffffff,30);
+            plight6.position.set(0,-300,0);
+            spot2mesh.add(plight6);
+
+            plight1.visible = false;
+            plight2.visible = false;
+            plight3.visible = false;
+            plight4.visible = false;
+            plight5.visible = false;
+            plight6.visible = false;
+
+        //Ventillátor
+            fan1g = new THREE.CylinderGeometry( 4, 4 ,100, 30,30,true);
+            fan1m = new THREE.MeshPhongMaterial( { color: 0x754107, wireframe: false } );
+            fan1mesh = new THREE.Mesh( fan1g, fan1m );
+            fan1mesh.position.z = 50;
+            fan1mesh.rotation.x = radian(90);
+            fan1mesh.material.side = THREE.DoubleSide;
+            fan1mesh.castShadow = true;
+            fan1mesh.receiveShadow = true;
+            ceilingMesh.add(fan1mesh);
+
+            fan2g = new THREE.SphereGeometry( 20, 30, 30 );
+            fan2m = new THREE.MeshPhongMaterial( { color: 0x754107, wireframe: false } );
+            fan2mesh = new THREE.Mesh( fan2g, fan2m );
+            fan2mesh.position.set(0,70,0);
+            fan2mesh.castShadow = true;
+            fan2mesh.receiveShadow = true;
+            fan1mesh.add(fan2mesh);
+
+            fan3g = new THREE.PlaneGeometry(300,30);
+            fan3m = new THREE.MeshPhongMaterial({color: 0x754107, wireframe: false});
+            fan3mesh = new THREE.Mesh(fan3g,fan3m);
+            fan3mesh.position.set(170,0,0);
+            fan3mesh.rotation.x = radian(60);
+            fan3mesh.material.side = THREE.DoubleSide;
+            fan3mesh.castShadow = true;
+            fan3mesh.receiveShadow = true;
+            fan2mesh.add(fan3mesh);
+
+            fan3clone1g = new THREE.PlaneGeometry(300, 30);
+            fan3clone1m = new THREE.MeshPhongMaterial({color: 0x754107, wireframe: false});
+            fan3clone1mesh = new THREE.Mesh(fan3clone1g,fan3clone1m);
+            fan3clone1mesh.position.set(-170,0,0);
+            //fan3mesh.rotation.z=20*Math.cos(60);
+            fan3clone1mesh.rotation.x = radian(-60);
+            //fan3mesh.rotation.y = radian(60);
+            fan3clone1mesh.material.side = THREE.DoubleSide;
+            fan3clone1mesh.castShadow = true;
+            fan3clone1mesh.receiveShadow = true;
+            fan2mesh.add(fan3clone1mesh);
+
+        //Rexasztal
+            var rexbodymesh = new THREE.Mesh(new THREE.BoxGeometry(600,400,100,2,2,2),
+                            new THREE.MeshPhongMaterial ({ color: 0x7b7d7f, wireframe: false}));
+            rexbodymesh.position.set(-250,0,150);
+            rexbodymesh.castShadow = true;
+            rexbodymesh.receiveShadow = true;
+            scene.add(rexbodymesh);
+
+            var rexfootmesh = new THREE.Mesh( new THREE.CylinderGeometry( 20, 20 , 100, 30,30),
+                            new THREE.MeshPhongMaterial( { color: 0x7b7d7f, wireframe: false } ));
+            rexfootmesh.position.set(0,170,50);
+            rexfootmesh.rotation.x = radian(90);
+            rexfootmesh.castShadow = true;
+            rexfootmesh.receiveShadow = true;
+            scene.add(rexfootmesh);
+
+            var rexfootmesh2 = rexfootmesh.clone();
+            rexfootmesh.position.set(0,-170,50);
+            scene.add(rexfootmesh2);
+
+            var rexfootmesh3 = rexfootmesh.clone();
+            rexfootmesh.position.set(-510,170,50);
+            scene.add(rexfootmesh3);
+
+            var rexfootmesh3 = rexfootmesh.clone();
+            rexfootmesh.position.set(-510,-170,50);
+            scene.add(rexfootmesh3);
+
+            var rexedgemesh = new THREE.Mesh(new THREE.BoxGeometry(600,10,30,2,2,2),
+                new THREE.MeshPhongMaterial ({ color: 0x7b7d7f, wireframe: false}));
+            rexedgemesh.position.set(0,195,65);
+            rexedgemesh.castShadow = true;
+            rexedgemesh.receiveShadow = true;
+            rexbodymesh.add(rexedgemesh);
+
+            var rexedgemesh2 = rexedgemesh.clone();
+            rexedgemesh2.position.set(0,-195,65);
+            rexbodymesh.add(rexedgemesh2);
+
+            var rexedgemesh3 = rexedgemesh.clone();
+            rexedgemesh3.position.set(295,0,65);
+            rexedgemesh3.rotation.z = radian(90);
+            rexedgemesh3.scale.x = 0.65;
+            rexbodymesh.add(rexedgemesh3);
+
+            var rexedgemesh4 = rexedgemesh3.clone();
+            rexedgemesh4.position.set(-295,0,65);
+            rexbodymesh.add(rexedgemesh4);
+
+            var rubbermesh = new THREE.Mesh(new THREE.BoxGeometry(580,10,10,2,2,2),
+                    new THREE.MeshPhongMaterial ({ color: 0x04d307, wireframe: false}));
+            rubbermesh.position.set(0,185,75);
+            rubbermesh.castShadow = true;
+            rubbermesh.receiveShadow = true;
+            rexbodymesh.add(rubbermesh);
+
+            var rubbermesh2 = rubbermesh.clone();
+            rubbermesh2.position.set(0,-185,75);
+            rexbodymesh.add(rubbermesh2);
+
+            var rubbermesh3 = rubbermesh.clone();
+            rubbermesh3.position.set(285,0,75);
+            rubbermesh3.rotation.z = radian(90);
+            rubbermesh3.scale.x = 0.65;
+            rexbodymesh.add(rubbermesh3);
+
+            var rubbermesh4 = rubbermesh3.clone();
+            rubbermesh4.position.set(-285,0,75);
+            rexbodymesh.add(rubbermesh4);
+
+            var postomesh = new THREE.Mesh( new THREE.PlaneGeometry( 590, 390),
+                new THREE.MeshPhongMaterial( { color: 0x04d307, wireframe: false } ) );
+            postomesh.position.set(0,0,51);
+            postomesh.castShadow = false;
+            postomesh.receiveShadow = true;
+            rexbodymesh.add(postomesh);
+
+            spheremesh = new THREE.Mesh( new THREE.SphereGeometry( 15, 50, 50 ),
+                new THREE.MeshPhongMaterial( { color: 0xffffff, wireframe: false } ));
+            spheremesh.position.set(0,0,15);
+            spheremesh.material.side = THREE.DoubleSide;
+            spheremesh.castShadow = true;
+            spheremesh.receiveShadow = true;
+            postomesh.add(spheremesh);
+
+        //Reflektorfény
+            spotLight = new THREE.SpotLight( 0xffffff,1);
+            spotLight.position.set( 0, 0, 1200);
+
+            spotLight.castShadow = true;
+            spotLight.angle = Math.PI / 5.5;
+            spotLight.penumbra = 0.2    ;
+            spotLight.shadow.mapSize.width = 1024;
+            spotLight.shadow.mapSize.height = 1024;
+
+            spotLight.shadow.camera.near = 500;
+            spotLight.shadow.camera.far = 4000;
+            spotLight.shadow.camera.fov = 30;
+            spotLight.target = scene;
+            scene.add( spotLight );
+
+            spotLight.visible = false;
+
+
+
+        //Nézőpont beállítás
+            scene.position.set(0,0,-250);
+
+        // Interaktív kameramozgatás
+            controls = new THREE.TrackballControls( camera, renderer.domElement );
+            controls.position0.x = 1000;
+            controls.rotateSpeed = 5.0;
+            controls.panSpeed = 1.0;
+
+        // Az ablak későbbi átméretezése esetén visszahívható függvény megadása
+            window.addEventListener( 'resize', handleWindowResize, false );
+
+        // Első képkocka rajzolása
+            render();
+    }
+    function radian(fok){
+        return fok * Math.PI / 180;
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        console.log( 'WIDTH=' + WIDTH + '; HEIGHT=' + HEIGHT );
+        renderer.setSize( WIDTH, HEIGHT );
+        aspectRatio = WIDTH / HEIGHT;
+        camera.aspect = aspectRatio;
+        camera.updateProjectionMatrix();
+
+    }
+
+    var render = function () {
+        // Újabb képkocka rajzolásának kérése.
+        // Maximálisan 60 FPS-t biztosít a rendszer.
+        requestAnimationFrame( render );
+
+        // Interaktív kameramozgatás kezelése
+        controls.update();
+
+        //Ventillátor forgásának beállítása
+        if (spinonoff){
+            //spin = true;
+            fan2mesh.rotation.y += 0.1;
+        }
+
+        // Golyó mozgása
+            if (!endup && !endright && !enddown && !endleft) {
+                spheremesh.position.y += 2;
+                spheremesh.position.x += 2;
+            }
+            if (spheremesh.position.x == 266){
+                endright = true;
+                endleft = false;
+            }
+            if (spheremesh.position.y == 166){
+                endup = true;
+                enddown = false;
+            }
+            if (spheremesh.position.x == -266){
+                endleft = true;
+                endright = false;
+            }
+            if (spheremesh.position.y == -166){
+                enddown = true;
+                endup = false;
+            }
+
+            if (endup && !endright){
+                spheremesh.position.y -= 2;
+                spheremesh.position.x += 2;
+            }
+            if (endright && !enddown){
+                spheremesh.position.y -= 2;
+                spheremesh.position.x -= 2;
+            }
+            if (enddown && !endleft){
+                spheremesh.position.y += 2;
+                spheremesh.position.x -= 2;
+            }
+            if (endleft && !endup){
+                spheremesh.position.y += 2;
+                spheremesh.position.x += 2;
+            }
+        renderer.render( scene, camera );
+    };
+
+    //Billentyű interakciók
+    function keydownevent(event){
+        var key = event.keyCode;
+        switch (key){
+            case 37:
+                if (wall1Mesh.visible){
+                    wall1Mesh.visible = false;
+                } else {
+                    wall1Mesh.visible = true;
+                }
+                break;
+            case 38:
+                if (ceilingMesh.visible){
+                    ceilingMesh.visible = false;
+                } else {
+                    ceilingMesh.visible = true;
+                }
+                break;
+            case 40:
+                if (wall2Mesh.visible){
+                    wall2Mesh.visible = false;
+                } else {
+                    wall2Mesh.visible = true;
+                }
+                break;
+            case 39:
+                if (wall3Mesh.visible){
+                    wall3Mesh.visible = false;
+                } else {
+                    wall3Mesh.visible = true;
+                }
+                break;
+            case 112:
+                if (document.getElementById('f1').style.visibility == "hidden") {
+                    document.getElementById('f1').style.visibility = "visible"
+                    document.getElementById('caption').style.visibility = "hidden";
+                    document.getElementById('info').style.visibility = "hidden";
+                    document.getElementById('infopanel').style.visibility = "hidden";
+                } else {
+                    document.getElementById('f1').style.visibility = "hidden";
+                    document.getElementById('caption').style.visibility = "visible";
+                    document.getElementById('info').style.visibility = "visible";
+                }
+                break;
+            case 113:
+                if (document.getElementById('infopanel').style.visibility == "visible") {
+                    document.getElementById('infopanel').style.visibility = "hidden";
+                } else {
+                    document.getElementById('infopanel').style.visibility = "visible";
+                }
+                break;
+            case 35:
+                if (plight1.visible){
+                    plight1.visible = false;
+                    plight2.visible = false;
+                    plight3.visible = false;
+                    plight4.visible = false;
+                } else {
+                    plight1.visible = true;
+                    plight2.visible = true;
+                    plight3.visible = true;
+                    plight4.visible = true;
+                }
+                break;
+            case 36:
+                if (!spinonoff) {
+                    spinonoff = true;
+                } else {
+                    spinonoff = false;
+                }
+                break;
+            case 33:
+                if (plight5.visible){
+                    plight5.visible = false;
+                    plight6.visible = false;
+
+                } else {
+                    plight5.visible = true;
+                    plight6.visible = true;
+                }
+                break;
+            case 34:
+                if (spotLight.visible){
+                    spotLight.visible = false;
+                } else {
+                    spotLight.visible = true;
+
+                }
+                break;
+        }
+    }
+</script>
+</body>
+</html>
